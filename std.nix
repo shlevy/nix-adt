@@ -17,18 +17,25 @@
 
 adt-lib:
   let inherit (adt-lib) make-type dict string list match;
-  in { # | Polymorphic optional type.
-       option = t: make-type "std.option ${t}"
-         { some = t;
-           none = null;
-         };
-       # | Polymorphic sum type.
-       either = l: r: make-type "std.either ${l} ${r}"
-         { left = l;
-           right = r;
-         };
-       # | A type for efficiently incrementally building a set of a given
-       #   type, i.e. the type expected by builtins.listToAttrs, i.e.
-       #   name-value pairs.
-       set-builder = ty: list (dict { name = string; value = ty; });
-     }
+  in rec { # | Polymorphic optional type.
+           option = t: make-type "std.option ${t}"
+             { some = t;
+               none = null;
+             };
+           # | Convert a possibly-null value to an optional value
+           # nullable-to-option : Π t, nullable t → option t
+           nullable-to-option = t: x: if x == null
+                                        then (option t).none
+                                      else (option t).some x;
+           # | Polymorphic sum type.
+           either = l: r: make-type "std.either ${l} ${r}"
+             { left = l;
+               right = r;
+             };
+           # | A type for efficiently incrementally building a set of a
+           #   given type, i.e. the type expected by builtins.listToAttrs,
+           #   i.e. name-value pairs.
+           set-builder = ty: list (dict { name = string;
+                                          value = ty;
+                                        });
+         }
