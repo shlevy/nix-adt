@@ -78,21 +78,33 @@ let inherit (adt-lib)
                any = null; # ^ Any type.
              };
 
+    # | Convert a type to the equivalent in the parent implementation
+    # parent-type : type → Type
+    parent-type = ty: match ty
+      { user = { name, ctors }:
+                 let converted-ctors = mapAttrs (_: ar: match ar
+                       { nullary = null;
+                         unary = parent-type;
+                         multiary = mapAttrs (_: parent-type);
+                       }) ctors;
+                 in make-type name converted-ctors;
+        string = string;
+        set = ty: set (parent-type ty);
+        list = ty: list (parent-type ty);
+        dict = spec: dict (mapAttrs (_: parent-type) spec);
+        int = int;
+        float = float;
+        function = function;
+        any = any;
+      };
+
     # | Extract the name of a type.
     # type-name : type → string
-    type-name = ty: match ty
-      # We reuse the toString of the parent implementation, ultimately
-      # bottoming out at the toString for the unchecked variant.
-      { user = builtins.getAttr "name";
-        string = toString string;
-        set = ty: toString (set ty);
-        list = ty: toString (list ty);
-        dict = spec: toString (dict spec);
-        int = toString int;
-        float = toString float;
-        function = toString function;
-        any = toString any;
-      };
+
+    # We reuse the toString of the parent implementation, ultimately
+    # bottoming out at the toString for the unchecked variant.
+    type-name = ty: toString (parent-type ty);
+
     # | Extract the constructors of a type.
     # type-ctors : type → set ctor-arity
     type-ctors = ty: match ty
