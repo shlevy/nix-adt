@@ -371,15 +371,15 @@ let inherit (adt-lib)
                    __toString = self: type-name self._val;
                  };
         set = ty: { _type = type-type;
-                    _val = type.set ty;
+                    _val = type.set ty._val;
                     __toString = self: type-name self._val;
                   };
         list = ty: { _type = type-type;
-                     _val = type.list ty;
+                     _val = type.list ty._val;
                      __toString = self: type-name self._val;
                    };
         dict = spec: { _type = type-type;
-                       _val = type.list spec;
+                       _val = type.dict (mapAttrs (_: t: t._val) spec);
                        __toString = self: type-name self._val;
                      };
         int = { _type = type-type;
