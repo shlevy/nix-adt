@@ -95,5 +95,5 @@ let example = adt-lib:
    # Evaluate the example in all three variants of the adt interface.
 in { unchecked = example unchecked;
      checked = example checked;
-     self-checked-checked = example checked;
+     self-checked-checked = example self-checked-checked;
    }

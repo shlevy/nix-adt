@@ -23,6 +23,10 @@ adt-lib:
 let inherit (adt-lib)
       make-type string set list dict int float function any match std;
     inherit (std) option either set-builder;
+    mapAttrs = f: set:
+      builtins.listToAttrs (map (name: { inherit name;
+                                         value = f name set.${name};
+                                       }) (builtins.attrNames set));
     optional-fun = option function;
 
     # | Reserved keywords
@@ -157,6 +161,9 @@ let inherit (adt-lib)
     # | Make a constructor (a nix function) corresponding to the
     #   constructor name, arity, and target type provided. The ctor args
     #   are type-checked at construction time.
+    #
+    # Unfortunately, to support sufficiently recursive types we need to
+    # delay some typechecking until the constructed value is scrutinized.
     # make-ctor : Π (t : type)
     #           , string
     #           → Π (a : ctor-arity)
@@ -173,10 +180,13 @@ let inherit (adt-lib)
       { nullary = base // { # nullary cases don't take an argument.
                             _val = builtins.getAttr name;
                           };
-        unary = arg-ty: arg: if has-type arg-ty arg
-          then base // { _val = cases: cases.${name} arg;
-                       }
-        else throw "bad argument to constructor ${name} of type ${type-name ty}: ${type-name arg-ty} expected, ${type-of arg} found";
+        unary = arg-ty: arg:
+          base //
+            { _val = if has-type arg-ty arg
+                       then cases: cases.${name} arg
+                     else throw
+                       "bad argument to constructor ${name} of type ${type-name ty}: ${type-name arg-ty} expected, ${type-of arg} found";
+            };
         multiary = arg-tys: args:
           let # Extra arguments to the constructor.
               leftovers = removeAttrs args (builtins.attrNames arg-tys);
@@ -196,11 +206,13 @@ let inherit (adt-lib)
               bad-args-errors = map
                  (arg: "${arg}: ${type-name arg-tys.${arg}} expected, ${type-of args.${arg}} found")
                  bad-args;
-          in if bad-args-errors == []
-            then base // { _val = cases: cases.${name} args;
-                         }
-          else
-            throw "bad arguments to constructor ${name} of type ${type-name ty}: ${builtins.concatStringsSep "; " bad-args-errors}";
+          in
+            base //
+              { _val = if bad-args-errors == []
+                         then cases: cases.${name} args
+                       else throw
+                         "bad arguments to constructor ${name} of type ${type-name ty}: ${builtins.concatStringsSep "; " bad-args-errors}";
+              };
       };
 
     ##################################################################
@@ -311,7 +323,8 @@ let inherit (adt-lib)
           # This is lazier than might be desirable to enable recursive
           # types. The upshot is you may be able to define and force
           # an invalid call to make-type, and only fail if/when you
-          # actually use a constructor.
+          # actually use a constructor, sometimes as late as when you
+          # scrutinize the result.
           let ctors = match (check-ctors ctors')
                 { right = ctors: ctors;
 
