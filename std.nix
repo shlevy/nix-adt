@@ -28,7 +28,7 @@ adt-lib:
                                         then (option t).none
                                       else (option t).some x;
            # | Polymorphic sum type.
-           either = l: r: make-type "std.either ${l} ${r}"
+           either = l: r: make-type "std.either ${l} | ${r}"
              { left = l;
                right = r;
              };
