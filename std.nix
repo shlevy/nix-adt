@@ -38,4 +38,17 @@ adt-lib:
            set-builder = ty: list (dict { name = string;
                                           value = ty;
                                         });
+
+           # | Polymorphic product type
+           pair = a: b: make-type "std.pair (${a}, ${b})" { make-pair = { fst: a; snd: b }; };
+
+           bool = make-type "std.bool" { true = null; false = null; };
+
+           # | Convert a Nix boolean to a nix-adt boolean
+           # nix-to-bool : Nix bool -> nix-adt bool
+           nix-to-bool = b: if b then bool.true else bool.false;
+
+           # | Convert a nix-adt boolean to a Nix boolean
+           # nix-from-bool : nix-adt bool -> Nix bool
+           nix-from-bool = b: match b { true = true; false = false; };
          }
