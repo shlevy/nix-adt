@@ -40,7 +40,7 @@ adt-lib:
                                         });
 
            # | Polymorphic product type
-           pair = a: b: make-type "std.pair (${a}, ${b})" { make-pair = { fst: a; snd: b }; };
+           pair = a: b: make-type "std.pair (${a}, ${b})" { make-pair = { fst = a; snd = b; }; };
 
            bool = make-type "std.bool" { true = null; false = null; };
 
