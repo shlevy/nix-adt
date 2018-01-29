@@ -127,7 +127,7 @@ let inherit (adt-lib)
         user = args: is-value val &&
                      (type-name val._val-ty) == (type-name ty);
         string = let ty = builtins.typeOf val;
-                 in ty == "string" || ty == "path";
+                 in ty == "string" || ty == "path" || val ? outPath || val ? __toString;
         int = (builtins.typeOf val) == "int";
         float = (builtins.typeOf val) == "float";
         function = (builtins.typeOf val) == "lambda";
